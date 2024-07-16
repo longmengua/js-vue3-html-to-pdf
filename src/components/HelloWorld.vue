@@ -1,58 +1,93 @@
 <template>
-  <div class="hello">
-    <h1>{{ msg }}</h1>
-    <p>
-      For a guide and recipes on how to configure / customize this project,<br>
-      check out the
-      <a href="https://cli.vuejs.org" target="_blank" rel="noopener">vue-cli documentation</a>.
-    </p>
-    <h3>Installed CLI Plugins</h3>
-    <ul>
-      <li><a href="https://github.com/vuejs/vue-cli/tree/dev/packages/%40vue/cli-plugin-babel" target="_blank" rel="noopener">babel</a></li>
-      <li><a href="https://github.com/vuejs/vue-cli/tree/dev/packages/%40vue/cli-plugin-eslint" target="_blank" rel="noopener">eslint</a></li>
-    </ul>
-    <h3>Essential Links</h3>
-    <ul>
-      <li><a href="https://vuejs.org" target="_blank" rel="noopener">Core Docs</a></li>
-      <li><a href="https://forum.vuejs.org" target="_blank" rel="noopener">Forum</a></li>
-      <li><a href="https://chat.vuejs.org" target="_blank" rel="noopener">Community Chat</a></li>
-      <li><a href="https://twitter.com/vuejs" target="_blank" rel="noopener">Twitter</a></li>
-      <li><a href="https://news.vuejs.org" target="_blank" rel="noopener">News</a></li>
-    </ul>
-    <h3>Ecosystem</h3>
-    <ul>
-      <li><a href="https://router.vuejs.org" target="_blank" rel="noopener">vue-router</a></li>
-      <li><a href="https://vuex.vuejs.org" target="_blank" rel="noopener">vuex</a></li>
-      <li><a href="https://github.com/vuejs/vue-devtools#vue-devtools" target="_blank" rel="noopener">vue-devtools</a></li>
-      <li><a href="https://vue-loader.vuejs.org" target="_blank" rel="noopener">vue-loader</a></li>
-      <li><a href="https://github.com/vuejs/awesome-vue" target="_blank" rel="noopener">awesome-vue</a></li>
-    </ul>
+  <div :style="{ width: `${width}px`, height: `${height}px`, border: '1px solid black' }" ref="content">
+    <p>{{ message }}</p>
+    <button @click="generatePDF">Generate PDF</button>
+    <StatisticChart ref="pdf" />
+    <h1>我的日記</h1>
+
+    <div class="entry">
+      <h2>2024年7月16日</h2>
+      <p>今天天氣晴朗，心情非常愉快。</p>
+      <p>早上去散步，感受到清新的空氣和和煦的陽光。</p>
+      <p class="date">Posted on July 16, 2024</p>
+    </div>
+
+    <div class="entry">
+      <h2>2024年7月15日</h2>
+      <p>今天下雨了，但是我喜歡雨天的氛圍。</p>
+      <p>下午和朋友去咖啡店聊天，度過了一個輕鬆的下午。</p>
+      <p class="date">Posted on July 15, 2024</p>
+    </div>
   </div>
 </template>
 
 <script>
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
+
+import StatisticChart from './StatisticChart.vue';
+
 export default {
-  name: 'HelloWorld',
-  props: {
-    msg: String
+  data() {
+    return {
+      message: 'Hello, PDF!',
+      width: 600,
+      height: 800,
+    };
+  },
+  components: {
+    StatisticChart
+  },
+  methods: {
+    async generatePDF() {
+      const doc = new jsPDF();
+      
+      // Get the root element of content div
+      const element = this.$refs.content;
+
+      // Use html2canvas to capture the element as canvas
+      const canvas = await html2canvas(element);
+      const imageData = canvas.toDataURL('image/png');
+
+      // Add image to PDF, scaling to fit the page width
+      /**
+       * 對於寬度：PDF寬度 = （600 / 300）* 72 ≈ 144 點
+       * 對於高度：PDF高度 = （1200 / 300) * 72 ≈ 288 點
+      */
+      const w = (this.width/300) * 105;
+      const h = (this.height/300) * 112;
+      doc.addImage(imageData, 'PNG', 0, 0, w, h);
+
+      // Save PDF
+      doc.save('generated.pdf');
+    }
   }
-}
+};
 </script>
 
-<!-- Add "scoped" attribute to limit CSS to this component only -->
-<style scoped>
-h3 {
-  margin: 40px 0 0;
+<style>
+h1 {
+  text-align: center;
+  color: #333;
 }
-ul {
-  list-style-type: none;
-  padding: 0;
+
+.entry {
+  background-color: #fff;
+  border-radius: 8px;
+  padding: 15px;
+  margin-bottom: 20px;
 }
-li {
-  display: inline-block;
-  margin: 0 10px;
+
+.entry h2 {
+  margin-bottom: 10px;
 }
-a {
-  color: #42b983;
+
+.entry p {
+  margin-bottom: 5px;
+}
+
+.entry .date {
+  font-style: italic;
+  color: #888;
 }
 </style>
